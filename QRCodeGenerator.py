@@ -97,11 +97,30 @@ class QRCodeGenerator(Report):
         Build the actual report.
         """
         people = self._filter.apply(self.database, self.database.iter_person_handles())
+        
+        self.doc.start_table("My-Table","QRCG-Table")
         for indiv in people:
+            self.doc.start_row()
+            self.doc.start_cell("QRCG-Cell")
+            self.doc.end_cell()
+            self.doc.start_cell("QRCG-Cell")    
+            
             person = self.database.get_person_from_handle(indiv)
             self.__generate_qr_code(person)
+            self.doc.end_cell()
+            
+            self.doc.start_cell("QRCG-Cell")
+            self.doc.end_cell()
+            self.doc.end_row()
+            
+        self.doc.end_table()
                
     def __generate_qr_code(self, person):
+        
+        
+        self.doc.start_paragraph('QRCG-Normal')
+        self.doc.end_paragraph()
+              
         name_string = 'name:'+ person.get_primary_name().get_regular_name() +', grampsid:'+ person.get_gramps_id()
         
         qr = qrcode.QRCode()
@@ -115,13 +134,9 @@ class QRCodeGenerator(Report):
         self.doc.end_paragraph()
    
         self.doc.start_paragraph('QRCG-Normal')
-        self.doc.add_media_object('temp.png','center', 3, 3)
+        self.doc.add_media_object('temp.png','single', 3, 3)
         self.doc.end_paragraph()
-
-        self.doc.start_paragraph('QRCG-Normal')
-        self.doc.write_text("\n\n\n\n\n\n\n")
-        self.doc.end_paragraph()        
-        
+              
 
 #------------------------------------------------------------------------
 #
@@ -180,93 +195,30 @@ class QRCodeOptions(MenuReportOptions):
         font.set_type_face(docgen.FONT_SANS_SERIF)
         font.set_size(12)
         font.set_bold(0)
-        para = docgen.ParagraphStyle()
-        para.set_font(font)
-        para.set_description(_('The basic style used for the text display'))
-        para.set_padding(3)
-        default_style.add_paragraph_style('QRCG-Normal', para)
-
-        font = docgen.FontStyle()
-        font.set_type_face(docgen.FONT_SANS_SERIF)
-        font.set_size(12)
-        font.set_bold(0)
-        para = docgen.ParagraphStyle()
-        para.set_font(font)
-        para.set_alignment(docgen.PARA_ALIGN_LEFT)
-        para.set_description(_('The style used for the page key on the top'))
-        default_style.add_paragraph_style('FSR-Key', para)
-
-        font = docgen.FontStyle()
-        font.set_type_face(docgen.FONT_SANS_SERIF)
-        font.set_size(12)
-        font.set_bold(1)
-        para = docgen.ParagraphStyle()
-        para.set_font(font)
-        para.set_description(_("The style used for names"))
-        default_style.add_paragraph_style('FSR-Name', para)
-
-        font = docgen.FontStyle()
-        font.set_type_face(docgen.FONT_SANS_SERIF)
-        font.set_size(12)
-        font.set_bold(1)
+        
         para = docgen.ParagraphStyle()
         para.set_font(font)
         para.set_alignment(docgen.PARA_ALIGN_CENTER)
-        para.set_description(_("The style used for numbers"))
-        default_style.add_paragraph_style('FSR-Number', para)
-
-        font = docgen.FontStyle()
-        font.set_type_face(docgen.FONT_SANS_SERIF)
-        font.set_size(8)
-        font.set_bold(0)
-        para = docgen.ParagraphStyle()
-        para.set_font(font)
-        para.set_description(_(
-            'The style used for footnotes (notes and source references)'))
-        default_style.add_paragraph_style('FSR-Footnote', para)
-
-        #Graphic Styles
-        """
-        graphic = docgen.GraphicsStyle()
-        graphic.set_paragraph_style(default_style.get_paragraph_style('QRCG-Normal'))
-        default_style.add_draw_style('QRCG-Graphic', graphic)
-        """
+        para.set_description(_('The basic style used for the text display'))
+        para.set_padding(3)
         
-        #Table Styles
-        cell = docgen.TableCellStyle()
-        cell.set_padding(0.1)
-        cell.set_top_border(1)
-        cell.set_left_border(1)
-        cell.set_right_border(1)
-        default_style.add_cell_style('FSR-HeadCell', cell)
-
-        cell = docgen.TableCellStyle()
-        cell.set_padding(0.1)
-        cell.set_left_border(1)
-        default_style.add_cell_style('FSR-EmptyCell', cell)
-
-        cell = docgen.TableCellStyle()
-        cell.set_padding(0.1)
-        cell.set_top_border(1)
-        cell.set_left_border(1)
-        default_style.add_cell_style('FSR-NumberCell', cell)
-
-        cell = docgen.TableCellStyle()
-        cell.set_padding(0.1)
-        cell.set_top_border(1)
-        cell.set_right_border(1)
-        cell.set_left_border(1)
-        default_style.add_cell_style('FSR-DataCell', cell)
-
-        cell = docgen.TableCellStyle()
-        cell.set_padding(0.1)
-        cell.set_top_border(1)
-        default_style.add_cell_style('FSR-FootCell', cell)
-
+        default_style.add_paragraph_style('QRCG-Normal', para)
+        
+        
         table = docgen.TableStyle()
         table.set_width(100)
         table.set_columns(3)
-        table.set_column_width(0, 7)
-        table.set_column_width(1, 7)
-        table.set_column_width(2, 86)
-        default_style.add_table_style('FSR-Table', table)
+        table.set_column_width(0, 33)
+        table.set_column_width(1, 33)
+        table.set_column_width(2, 33)
+        default_style.add_table_style('QRCG-Table', table)
+        
+        cell = docgen.TableCellStyle()
+        cell.set_padding(0.1)
+        cell.set_top_border(1)
+        cell.set_right_border(1)
+        cell.set_left_border(1)
+        cell.set_bottom_border(1)
+        default_style.add_cell_style('QRCG-Cell', cell)
+
+                
