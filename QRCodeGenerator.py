@@ -38,12 +38,11 @@ import string
 #  
 #------------------------------------------------------------------------
 import qrcode
-import StringIO
 from gramps.gen.display.name import displayer
 from gramps.gen.lib import Date, Event, EventType, FamilyRelType, Name
 from gramps.gen.lib import StyledText, StyledTextTag, StyledTextTagType
 from gramps.gen.plug import docgen
-from gramps.gen.plug.menu import BooleanOption, EnumeratedListOption, PersonOption
+from gramps.gen.plug.menu import BooleanOption, EnumeratedListOption, PersonOption, PersonListOption
 from gramps.gen.plug.menu import FilterOption
 from gramps.gen.plug.report import Report
 from gramps.gen.plug.report import utils
@@ -90,28 +89,21 @@ class QRCodeGenerator(Report):
 
         Report.__init__(self, database, options, user)
         menu = options.menu
-        self.person_id    = menu.get_option_by_name('pid').get_value()
-        self.person2_id   = menu.get_option_by_name('pid2').get_value()
-        self.recurse      = menu.get_option_by_name('recurse').get_value()
-        self.callname     = menu.get_option_by_name('callname').get_value()
-        self.placeholder  = menu.get_option_by_name('placeholder').get_value()
-        self.incl_sources = menu.get_option_by_name('incl_sources').get_value()
-        self.incl_notes   = menu.get_option_by_name('incl_notes').get_value()
-
-
+        filter_option = menu.get_option_by_name('filter')
+        self._filter = filter_option.get_filter()
+        
     def write_report(self):
         """
         Build the actual report.
         """
-        
-        person1 = self.database.get_person_from_gramps_id(self.person_id)
-        self.__generate_qr_code(person1)
-        #person2 = self.database.get_person_from_gramps_id(self.person2_id)
-        #self.__process_relationship(person1, person2)
-       
+        people = self._filter.apply(self.database, self.database.iter_person_handles())
+        for indiv in people:
+            person = self.database.get_person_from_handle(indiv)
+            self.__generate_qr_code(person)
+               
     def __generate_qr_code(self, person):
         name_string = 'name:'+ person.get_primary_name().get_regular_name() +', grampsid:'+ person.get_gramps_id()
-        print(name_string)        
+        
         qr = qrcode.QRCode()
         qr.add_data(name_string)
         qr.make(fit=True)
@@ -120,100 +112,16 @@ class QRCodeGenerator(Report):
         
         self.doc.start_paragraph('QRCG-Normal')
         self.doc.write_text(person.get_primary_name().get_regular_name())
-        self.doc.add_media_object('temp.png','left', 3, 3)
         self.doc.end_paragraph()
-        
-        
-
-    def __process_relationship(self, person1, person2):
-        # --- Now let the party begin! ---
+   
+        self.doc.start_paragraph('QRCG-Normal')
+        self.doc.add_media_object('temp.png','center', 3, 3)
+        self.doc.end_paragraph()
 
         self.doc.start_paragraph('QRCG-Normal')
-        #self.doc.
-        self.doc.start_paragraph('FSR-Key')
-        self.doc.write_text('starting')
-        self.doc.end_paragraph()
-
-        self.doc.start_table(None, 'FSR-Table')
-
-        # Main person
-        self.doc.start_row()
-        self.doc.start_cell('FSR-HeadCell', 3)
+        self.doc.write_text("\n\n\n\n\n\n\n")
+        self.doc.end_paragraph()        
         
-        self.doc.start_paragraph('FSR-Name')
-        self.doc.write_text("First Person\n")
-        self.doc.write_text(person1.get_primary_name().get_regular_name())
-        event_list = person1.get_event_ref_list()
-        for person_event_ref in event_list:
-          for e_handle in person_event_ref.get_referenced_handles():
-                class_type, handle = e_handle
-                if class_type == 'Event':
-                    current_event = self.database.get_event_from_handle(handle) #get the revent found in eventref 
-                    print('current_event.get_type().string: ',current_event.get_type().string) #takes the event from the database and gets the associated string (type).
-                    print('to_struct',current_event.to_struct())
-                    print("\n\n")
-                       
-        self.doc.end_paragraph()
-        #self.__dump_person(person1, False, None)
-
-        self.doc.start_paragraph('FSR-Name')
-        self.doc.write_text("\nSecond Person\n")
-        self.doc.write_text(person1.get_primary_name().get_regular_name())
-        self.doc.end_paragraph()
-        #self.__dump_person(person2, False, None)
-        
-        self.doc.start_paragraph('FSR-Name')
-        relationship = get_relationship_calculator()
-        relate = "\nSecond person is the first person's " + relationship.get_one_relationship(self.database, person1, person2)
-        self.doc.write_text(relate)
-        self.doc.end_paragraph()
-
-        self.doc.start_paragraph('FSR-Name')
-        self.doc.write_text("\nCommon Ancestor\n")
-        self.doc.write_text("The common ancestors for Person 1 and Person 2 are ")
-        #firstAncestor = self.database.get_person_from_handle();
-        info, msg = relationship.get_relationship_distance_new(
-                self.database, person1, person2, all_dist=True, only_birth=False)
-
-        self.doc.write_text(self.__process_ancestor_string(info))
-        self.doc.end_paragraph()
-
-        #relationship = get_relationship_calculator()
-        
-        #self.doc.start_paragraph('FSR-Name')
-     
-                        
-        self.doc.end_cell()
-        self.doc.end_row()
-        self.doc.end_table()
-
-    def __process_ancestor_string(self, info): 
-        if type(info).__name__=='tuple':
-            return None
-        elif type(info).__name__=='list':
-            len(info)
-            
-            ancestorlist=[]
-            for relation in info:
-                rank = relation[0]
-                person_handle = relation[1]
-                if rank == -1:
-                    return None
-                ancestor = self.database.get_person_from_handle(person_handle)
-                name = ancestor.get_primary_name().get_regular_name()
-                ancestorlist.append(name)
-                
-            if len(ancestorlist)>0:  
-                return ' and '.join(ancestorlist)
-            else:
-                return None          
-                        
-_Name_CALLNAME_DONTUSE = 0
-_Name_CALLNAME_REPLACE = 1
-_Name_CALLNAME_UNDERLINE_ADD = 2
-
-   
-
 
 #------------------------------------------------------------------------
 #
@@ -225,11 +133,11 @@ class QRCodeOptions(MenuReportOptions):
     Defines options and provides handling interface.
     """
 
-    RECURSE_NONE = 0
-    RECURSE_SIDE = 1
-    RECURSE_ALL = 2
-
     def __init__(self, name, dbase):
+        self.__pid = None
+        self.__filter = None
+        self.__db = dbase
+        
         MenuReportOptions.__init__(self, name, dbase)
 
 
@@ -240,43 +148,33 @@ class QRCodeOptions(MenuReportOptions):
         ##########################
         self.__filter = FilterOption(_("Filter"), 0)
         self.__filter.set_help(
-               _("Select filter to restrict people that appear on calendar"))
+               _("A filter used to determine which people are included in the QRCode Generation Report"))
         menu.add_option(category_name, "filter", self.__filter)
+        self.__filter.connect('value-changed',self.__filter_changed)
         
-        pid = PersonOption(_("First Relative"))
-        pid2 = PersonOption(_("Second Relative"))
-        pid.set_help(_("The first person for the relationship calculation."))
-        pid2.set_help(_("The second  person for the relationship calculation."))
-        menu.add_option(category_name, "pid", pid)
-        menu.add_option(category_name, "pid2", pid2)
-
-        recurse = EnumeratedListOption(_("Print sheets for"), self.RECURSE_NONE)
-        recurse.set_items([
-            (self.RECURSE_NONE, _("Center person only")),
-            (self.RECURSE_SIDE, _("Center person and descendants in side branches")),
-            (self.RECURSE_ALL,  _("Center person and all descendants"))])
-        menu.add_option(category_name, "recurse", recurse)
-
-        callname = EnumeratedListOption(_("Use call name"), _Name_CALLNAME_DONTUSE)
-        callname.set_items([
-            (_Name_CALLNAME_DONTUSE, _("Don't use call name")),
-            (_Name_CALLNAME_REPLACE, _("Replace first name with call name")),
-            (_Name_CALLNAME_UNDERLINE_ADD, _("Underline call name in first name / add call name to first name"))])
-        menu.add_option(category_name, "callname", callname)
-
-        placeholder = BooleanOption( _("Print placeholders for missing information"), True)
-        menu.add_option(category_name, "placeholder", placeholder)
-        
-        incl_sources = BooleanOption( _("Include sources"), True)
-        menu.add_option(category_name, "incl_sources", incl_sources)
-
-        incl_notes = BooleanOption( _("Include notes"), True)
-        menu.add_option(category_name, "incl_notes", incl_notes)
-    
+        self.__pid = PersonOption(_("Filter Person"))
+        self.__pid.set_help(_("This field unlocks when a filter is selected that depends upon this value."))
+        menu.add_option(category_name, "pid", self.__pid)
+        self.__pid.connect('value-changed', self.__update_filters)
+        self.__update_filters()
+   
+    def __filter_changed(self):
+        filter_value = self.__filter.get_value()
+        if filter_value in [1, 2, 3, 4]:
+            self.__pid.set_available(True)
+        else:
+            self.__pid.set_available(False)
+           
+    def __update_filters(self):
+        gid = self.__pid.get_value()
+        person = self.__db.get_person_from_gramps_id(gid)
+        filter_list = utils.get_person_filters(person, False)
+        self.__filter.set_filters(filter_list)
 
     def make_default_style(self, default_style):
         """Make default output style for the QR Code Generator Report."""
 
+        
         #Paragraph Styles
         font = docgen.FontStyle()
         font.set_type_face(docgen.FONT_SANS_SERIF)
@@ -285,6 +183,7 @@ class QRCodeOptions(MenuReportOptions):
         para = docgen.ParagraphStyle()
         para.set_font(font)
         para.set_description(_('The basic style used for the text display'))
+        para.set_padding(3)
         default_style.add_paragraph_style('QRCG-Normal', para)
 
         font = docgen.FontStyle()
@@ -326,6 +225,13 @@ class QRCodeOptions(MenuReportOptions):
             'The style used for footnotes (notes and source references)'))
         default_style.add_paragraph_style('FSR-Footnote', para)
 
+        #Graphic Styles
+        """
+        graphic = docgen.GraphicsStyle()
+        graphic.set_paragraph_style(default_style.get_paragraph_style('QRCG-Normal'))
+        default_style.add_draw_style('QRCG-Graphic', graphic)
+        """
+        
         #Table Styles
         cell = docgen.TableCellStyle()
         cell.set_padding(0.1)
