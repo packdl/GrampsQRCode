@@ -99,18 +99,25 @@ class QRCodeGenerator(Report):
         people = self._filter.apply(self.database, self.database.iter_person_handles())
         
         self.doc.start_table("My-Table","QRCG-Table")
+        counter = 0
+        max_columns=self.doc.get_style_sheet().get_table_style("QRCG-Table").get_columns()
+        print(max_columns)        
         for indiv in people:
-            self.doc.start_row()
-            self.doc.start_cell("QRCG-Cell")
-            self.doc.end_cell()
-            self.doc.start_cell("QRCG-Cell")    
             
+            if counter%max_columns==0:
+                self.doc.start_row()
+
+            self.doc.start_cell("QRCG-Cell")    
             person = self.database.get_person_from_handle(indiv)
             self.__generate_qr_code(person)
             self.doc.end_cell()
+
+            if counter%max_columns==max_columns-1:
+                self.doc.end_row()
             
-            self.doc.start_cell("QRCG-Cell")
-            self.doc.end_cell()
+            counter+=1
+        
+        if counter%max_columns!=0:
             self.doc.end_row()
             
         self.doc.end_table()
