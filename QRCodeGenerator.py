@@ -1,25 +1,6 @@
 #   
-# Gramps - a GTK+/GNOME based genealogy program - Family Sheet plugin
+# Gramps - a GTK+/GNOME based genealogy program -QRCodeGenerator plugin
 #
-# Copyright (C) 2008,2009,2010 Reinhard Mueller
-# Copyright (C) 2010 Jakim Friant
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-#
-
-# $Id$
 
 """Reports/Text Reports/QRCodeGenerator"""
 
@@ -30,7 +11,6 @@ from __future__ import unicode_literals
 # Standard Python modules
 #
 #------------------------------------------------------------------------
-import string
 
 #------------------------------------------------------------------------
 #
@@ -38,17 +18,13 @@ import string
 #  
 #------------------------------------------------------------------------
 import qrcode
-from gramps.gen.display.name import displayer
-from gramps.gen.lib import Date, Event, EventType, FamilyRelType, Name
-from gramps.gen.lib import StyledText, StyledTextTag, StyledTextTagType
+from gramps.gen.lib import Event, EventType 
 from gramps.gen.plug import docgen
-from gramps.gen.plug.menu import BooleanOption, EnumeratedListOption, PersonOption, PersonListOption
+from gramps.gen.plug.menu import PersonOption
 from gramps.gen.plug.menu import FilterOption
 from gramps.gen.plug.report import Report
 from gramps.gen.plug.report import utils
 from gramps.gen.plug.report import MenuReportOptions
-import gramps.gen.datehandler
-from gramps.gen.relationship import get_relationship_calculator
 from gramps.gen.const import GRAMPS_LOCALE as glocale
 try:
     _trans = glocale.get_addon_translator(__file__)
